@@ -40,11 +40,10 @@ object Tables {
     def event = foreignKey("EVENT_FK", event_id, events)(_.id)
   }
 
-  // Table query for the Ugit SERS table, represents all tuples
+  // Table query for the USERS table, represents all tuples
   val users = TableQuery[Users]
   val events = TableQuery[Events]
   val reservations = TableQuery[Reservations]
-
 
   // Query, implicit inner join events and users, return their names
   val findEventsWithAuthors = {
