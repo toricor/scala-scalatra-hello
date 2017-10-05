@@ -1,9 +1,13 @@
 package com.toricor.demo
 
-import org.scalatra.{FutureSupport, ScalatraBase, ScalatraServlet}
+import org.scalatra.{ScalatraBase, FutureSupport, ScalatraServlet}
+
 import slick.jdbc.H2Profile.api._
 
+// import scala.concurrent.ExecutionContext.Implicits.global
+
 object Tables {
+
   // Definition of the SUPPLIERS table
   class Suppliers(tag: Tag) extends Table[(Int, String, String, String, String, String)](tag, "SUPPLIERS") {
     def id = column[Int]("SUP_ID", O.PrimaryKey) // This is the primary key column
@@ -30,13 +34,13 @@ object Tables {
     def supplier = foreignKey("SUP_FK", supID, suppliers)(_.id)
   }
 
-  // Table query for the SUPPLIERS table, represents all tuples of that table
+  // Table query for the SUPPLIERS table, represents all tuples
   val suppliers = TableQuery[Suppliers]
 
   // Table query for the COFFEES table
   val coffees = TableQuery[Coffees]
 
-  // Query, implicit inner join coffees and suppliers, return their names
+  // Query, implicit inner join coffes and suppliers, return their names
   val findCoffeesWithSuppliers = {
     for {
       c <- coffees
@@ -47,11 +51,11 @@ object Tables {
   // DBIO Action which runs several queries inserting sample data
   val insertSupplierAndCoffeeData = DBIO.seq(
     Tables.suppliers += (101, "Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199"),
-    Tables.suppliers += (29, "Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460"),
+    Tables.suppliers += (49, "Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460"),
     Tables.suppliers += (150, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966"),
     Tables.coffees ++= Seq(
       ("Colombian", 101, 7.99, 0, 0),
-      ("French_Roast", 49, 8.99, 0,0),
+      ("French_Roast", 49, 8.99, 0, 0),
       ("Espresso", 150, 9.99, 0, 0),
       ("Colombian_Decaf", 101, 8.99, 0, 0),
       ("French_Roast_Decaf", 49, 9.99, 0, 0)
@@ -70,6 +74,7 @@ object Tables {
 }
 
 trait SlickRoutes extends ScalatraBase with FutureSupport {
+
   def db: Database
 
   get("/db/create-db") {
@@ -84,13 +89,13 @@ trait SlickRoutes extends ScalatraBase with FutureSupport {
     db.run(Tables.findCoffeesWithSuppliers.result) map { xs =>
       println(xs)
       contentType = "text/plain"
-      xs map { case (s1, s2) => f" $s1 supplied by $s2" } mkString "¥n"
+      xs map { case (s1, s2) => f"  $s1 supplied by $s2" } mkString "\n"
     }
   }
 
 }
 
-class SlickApp(val db:Database) extends ScalatraServlet with FutureSupport with SlickRoutes {
+class SlickApp(val db: Database) extends ScalatraServlet with FutureSupport with SlickRoutes {
 
   protected implicit def executor = scala.concurrent.ExecutionContext.Implicits.global
 
