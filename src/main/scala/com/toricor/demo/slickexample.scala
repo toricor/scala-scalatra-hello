@@ -28,7 +28,7 @@ object Tables {
     def published_at = column[String]("PUBLISHED_AT")
     def * = (id, title, description, author, place, participants, max_participants, created_at, published_at)
 
-    def user = foreignKey("USER_FK", author, users)
+    def user = foreignKey("USER_EVENT_FK", author, users)(_.id)
   }
 
   // Definition of the RESERVATION table
@@ -38,8 +38,8 @@ object Tables {
     def event_id = column[Int]("EVENT_ID")
     def * = (id, user_id, event_id)
 
-    def user = foreignKey("USER_FK", user_id, users)
-    def event = foreignKey("EVENT_FK", event_id, events)
+    def user = foreignKey("USER_RESERVE_FK", user_id, users)(_.id)
+    def event = foreignKey("EVENT_FK", event_id, events)(_.id)
   }
 
   // Definition of the SUPPLIERS table
@@ -67,10 +67,12 @@ object Tables {
     // A reified foreign key relation that can be navigated to create a join
     def supplier = foreignKey("SUP_FK", supID, suppliers)(_.id)
   }
-  val users = TableQuery[Users]
-  val events = TableQuery[Events]
+
   // Table query for the SUPPLIERS table, represents all tuples
   val suppliers = TableQuery[Suppliers]
+  val users = TableQuery[Users]
+  val events = TableQuery[Events]
+  val reservations = TableQuery[Reservations]
 
   // Table query for the COFFEES table
   val coffees = TableQuery[Coffees]
@@ -81,6 +83,13 @@ object Tables {
       c <- coffees
       s <- c.supplier
     } yield (c.name, s.name)
+  }
+
+  val findEventsWithAuthors = {
+    for {
+      e <- events
+      u  <- e.user
+    } yield (e.title, u.name)
   }
 
   // DBIO Action which runs several queries inserting sample data
@@ -97,14 +106,26 @@ object Tables {
     )
   )
 
+  val insertUsersEventsAndReservationData = DBIO.seq(
+    Tables.users += (12, "hoge"),
+    Tables.users += (14, "hage"),
+    Tables.users += (16, "fuga"),
+    Tables.events += (2, "title2", "great project2", 12, "五反田", 22, 24, "2017-10-01 00:00:00", "2017-11-01 00:00:01"),
+    Tables.events += (3, "title3", "great project3", 12, "五反田", 20, 240, "2016-10-01 00:00:00", "2016-11-01 00:00:01"),
+    Tables.events += (5, "title5", "great project5", 14, "五反田", 2340, 2400, "2014-10-01 00:00:00", "2016-11-01 00:00:01"),
+    Tables.reservations += (1, 12, 2),
+    Tables.reservations += (2, 14, 3),
+    Tables.reservations += (3, 14, 5)
+  )
+
   // DBIO Action which creates the schema
-  val createSchemaAction = (suppliers.schema ++ coffees.schema).create
+  val createSchemaAction = (users.schema ++ events.schema ++ reservations.schema).create
 
   // DBIO Action which drops the schema
-  val dropSchemaAction = (suppliers.schema ++ coffees.schema).drop
+  val dropSchemaAction = (users.schema ++ events.schema ++ reservations.schema).drop
 
   // Create database, composing create schema and insert sample data actions
-  val createDatabase = DBIO.seq(createSchemaAction, insertSupplierAndCoffeeData)
+  val createDatabase = DBIO.seq(createSchemaAction, insertUsersEventsAndReservationData)
 
 }
 
@@ -121,7 +142,7 @@ trait SlickRoutes extends ScalatraBase with FutureSupport {
   }
 
   get("/coffees") {
-    db.run(Tables.findCoffeesWithSuppliers.result) map { xs =>
+    db.run(Tables.findEventsWithAuthors.result) map { xs =>
       println(xs)
       contentType = "text/plain"
       xs map { case (s1, s2) => f"  $s1 supplied by $s2" } mkString "\n"
