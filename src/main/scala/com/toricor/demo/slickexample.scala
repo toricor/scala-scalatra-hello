@@ -1,12 +1,46 @@
 package com.toricor.demo
 
-import org.scalatra.{ScalatraBase, FutureSupport, ScalatraServlet}
+import java.time.LocalDateTime
 
+import org.scalatra.{FutureSupport, ScalatraBase, ScalatraServlet}
 import slick.jdbc.H2Profile.api._
 
 // import scala.concurrent.ExecutionContext.Implicits.global
 
 object Tables {
+  // Definition of the USERS table
+  class Users(tag: Tag) extends Table[(Int, String)](tag, "USERS") {
+    def id = column[Int]("USER_ID", O.PrimaryKey)
+    def name = column[String]("USER_NAME")
+    def * = (id, name)
+  }
+
+  // Definition of the EVENTS table
+  class Events(tag: Tag) extends Table[(Int, String, String, Int, String, Int, Int, String, String)](tag, "EVENTS") {
+    def id = column[Int]("EVENT_ID", O.PrimaryKey)
+    def title = column[String]("TITLE")
+    def description = column[String]("DESCRIPTION")
+    def author = column[Int]("USER_ID")
+    def place = column[String]("PLACE")
+    def participants = column[Int]("PARTICIPANTS")
+    def max_participants = column[Int]("MAX")
+    def created_at = column[String]("CREATED_AT")
+    def published_at = column[String]("PUBLISHED_AT")
+    def * = (id, title, description, author, place, participants, max_participants, created_at, published_at)
+
+    def user = foreignKey("USER_FK", author, users)
+  }
+
+  // Definition of the RESERVATION table
+  class Reservations(tag: Tag) extends Table[(Int, Int, Int)](tag, "RESERVATIONS") {
+    def id = column[Int]("RESERVATION_ID", O.PrimaryKey)
+    def user_id = column[Int]("USER_ID")
+    def event_id = column[Int]("EVENT_ID")
+    def * = (id, user_id, event_id)
+
+    def user = foreignKey("USER_FK", user_id, users)
+    def event = foreignKey("EVENT_FK", event_id, events)
+  }
 
   // Definition of the SUPPLIERS table
   class Suppliers(tag: Tag) extends Table[(Int, String, String, String, String, String)](tag, "SUPPLIERS") {
@@ -33,7 +67,8 @@ object Tables {
     // A reified foreign key relation that can be navigated to create a join
     def supplier = foreignKey("SUP_FK", supID, suppliers)(_.id)
   }
-
+  val users = TableQuery[Users]
+  val events = TableQuery[Events]
   // Table query for the SUPPLIERS table, represents all tuples
   val suppliers = TableQuery[Suppliers]
 
