@@ -45,11 +45,24 @@ object Tables {
   val events = TableQuery[Events]
   val reservations = TableQuery[Reservations]
 
+  // find all data
+  val findAllUsers = users.map(_.*)
+  val findAllEvents = events.map(_.*)
+  val findAllReservation = reservations.map(_.*)
+
   // Query, implicit inner join events and users, return their names
   val findEventsWithAuthors = {
     for {
       e <- events
       u <- e.user
+    } yield (e.title, u.name)
+  }
+
+  val findReservationsWithUsersAndEvents = {
+    for {
+      r <- reservations
+      e <- r.event
+      u <- r.user
     } yield (e.title, u.name)
   }
 
@@ -89,11 +102,31 @@ trait SlickRoutes extends ScalatraBase with FutureSupport {
     db.run(Tables.dropSchemaAction)
   }
 
+  get("/users") {
+    db.run(Tables.findAllUsers.result)
+  }
+
+  get("/events") {
+    db.run(Tables.findAllEvents.result)
+  }
+
+  get("/reservations") {
+    db.run(Tables.findAllReservation.result)
+  }
+
   get("/events/with-authors") {
     db.run(Tables.findEventsWithAuthors.result) map { xs =>
       println(xs)
       contentType = "text/plain"
-      xs map { case (s1, s2) => f"  $s1 supplied by $s2" } mkString "\n"
+      xs map { case (s1, s2) => f"  $s1 created by $s2" } mkString "\n"
+    }
+  }
+
+  get("/reservations/with-events-and-users") {
+    db.run(Tables.findReservationsWithUsersAndEvents.result) map { xs =>
+      println(xs)
+      contentType = "text/plain"
+      xs map { case (s1, s2) => f"  $s1 reserved by $s2" } mkString "\n"
     }
   }
 
