@@ -1,5 +1,7 @@
 package com.toricor.demo
 
+import org.json4s.{Extraction, JObject}
+import org.json4s.JsonAST.JNothing
 import org.scalatra._
 
 // JSON-related libraries
@@ -28,8 +30,24 @@ class FlowersController extends ScalatraServlet with JacksonJsonSupport{
   }
 
   // "/flowers/*"
+  get("/sample") {
+    Extraction.decompose(
+      Flower("blue-rose", "Blue Rose")
+    )
+  }
+
   get("/all") {
     FlowerData.all
   }
 
+  post("/post") {
+    parsedBody match {
+      case JNothing => halt(400, "invalid json")
+      case json: JObject => {
+        val fl: Flower = json.extract[Flower]
+        fl.slug
+      }
+      case _ => halt(400, "unknown json")
+    }
+  }
 }
