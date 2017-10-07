@@ -94,6 +94,10 @@ trait SlickRoutes extends ScalatraBase with FutureSupport {
 
   def db: Database
 
+  get("/hello") {
+    "hello!"
+  }
+
   get("/db/create-db") {
     db.run(Tables.createDatabase)
   }

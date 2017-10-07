@@ -20,7 +20,9 @@ class ScalatraBootstrap extends LifeCycle {
 
   override def init(context: ServletContext) {
     val db = Database.forDataSource(cpds, None)   // create the Database object
-    context.mount(new SlickApp(db), "/*")   // create and mount the Scalatra application
+    context.mount(new FlowersController, "/flowers/*")
+    context.mount(new SlickApp(db), "/*") // create and mount the Scalatra application
+
   }
 
   private def closeDbConnection() {

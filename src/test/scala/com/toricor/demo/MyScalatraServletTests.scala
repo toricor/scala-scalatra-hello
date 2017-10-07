@@ -2,14 +2,17 @@ package com.toricor.demo
 
 import org.scalatra.test.scalatest._
 import org.scalatest.FunSuiteLike
+import slick.jdbc.H2Profile.api._
 
-class MyScalatraServletTests extends ScalatraSuite with FunSuiteLike {
+class SlickAppTests extends ScalatraSuite with FunSuiteLike{
 
-  addServlet(classOf[MyScalatraServlet], "/*")
+  implicit val db = new Database
+  addServlet(new SlickApp(db), "/*")
 
-  test("GET / on MyScalatraServlet should return status 200"){
-    get("/"){
+  test("simple get"){
+    get("/hello"){
       status should equal (200)
+      body should include ("hello!")
     }
   }
 
