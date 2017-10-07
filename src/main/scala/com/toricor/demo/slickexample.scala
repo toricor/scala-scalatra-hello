@@ -1,6 +1,8 @@
 package com.toricor.demo
 
-import org.json4s.{DefaultFormats, Formats}
+import com.toricor.demo.Tables.Users
+import org.json4s.JsonAST._
+import org.json4s.{DefaultFormats, Formats, JObject}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{FutureSupport, ScalatraBase, ScalatraServlet}
 import slick.jdbc.H2Profile.api._
@@ -96,6 +98,7 @@ trait SlickRoutes extends ScalatraBase with FutureSupport with JacksonJsonSuppor
 
   def db: Database
   protected implicit lazy val jsonFormats: Formats = DefaultFormats
+  db.run(Tables.createDatabase)
 
   before() {
     contentType = formats("json")
@@ -103,10 +106,6 @@ trait SlickRoutes extends ScalatraBase with FutureSupport with JacksonJsonSuppor
 
   get("/hello") {
     "hello!"
-  }
-
-  get("/db/create-db") {
-    db.run(Tables.createDatabase)
   }
 
   get("/db/drop-db") {
@@ -137,6 +136,20 @@ trait SlickRoutes extends ScalatraBase with FutureSupport with JacksonJsonSuppor
     }
   }
 
+  post("/post") {
+    //println(parsedBody)
+    parsedBody match {
+      case JNothing => halt(400, "invalid json")
+      case json: JObject => {
+        for {
+          JObject(user) <- json
+          JField("id", JInt(id)) <- user
+          JField("name", JString(name)) <- user
+        } yield (id, name)
+      }
+      case _ => halt(400, "unknown json")
+    }
+  }
 }
 
 class SlickApp(val db: Database) extends ScalatraServlet with FutureSupport with SlickRoutes {
