@@ -44,6 +44,10 @@ object Tables {
     def event = foreignKey("RESERVE_EVENT_FK", event_id, events)(_.id)
   }
 
+  // DBアクセサ層はこれが参考になりそう
+  // * Slick.MySQLDriverを使っている点
+  // * 生のSQLを書いている点
+  // https://github.com/hatena/scala-Intern-Bookmark/blob/master/src/main/scala/internbookmark/repository/Users.scala
   // Table query for the USERS table, represents all tuples
   val users = TableQuery[Users]
   val events = TableQuery[Events]
